@@ -11,13 +11,15 @@ const app = express();
 app.use(cors());
 
 const PORT = process.env.PORT || 3001;
+app.use(express.json())
 mongoose.connect('mongodb://localhost:27017/books', { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 const booksSchema=new mongoose.Schema({
   name:String,
   description:String,
-  status:String
+  status:String,
+  img:String
 });
 
 const clientSchema= new mongoose.Schema({
@@ -26,20 +28,18 @@ const clientSchema= new mongoose.Schema({
   email:String
 })
 
-const bookModel=mongoose.model('book',booksSchema)
-const clientModel=mongoose.model('client',clientSchema)
-
+const userBooks = mongoose.model('Book', ownerSchema);
 
 function seedClientCollection() {
-
+  
   const taima = new userModel({email: 'taima.hajaj@gmail.com', books: [
     { name: 'The Growth Mindset', description: 'Dweck coined the terms fixed mindset and growth mindset to describe the underlying beliefs people have about learning and intelligence. When students believe they can get smarter, they understand that effort makes them stronger. Therefore they put in extra time and effort, and that leads to higher achievement.', status: 'FAVORITE FIVE', img: 'https://m.media-amazon.com/images/I/61bDwfLudLL._AC_UL640_QL65_.jpg' },
     { name: 'The Momnt of Lift', description: 'Melinda Gates shares her how her exposure to the poor around the world has established the objectives of her foundation.', status: 'RECOMMENDED TO ME', img: 'https://m.media-amazon.com/images/I/71LESEKiazL._AC_UY436_QL65_.jpg'}
   ]})
-taima.save();
+  // taima.save();
 }
 
-seedClientCollection();
+// seedClientCollection();
 
 app.get('/', homePageHandler);
 
@@ -50,16 +50,58 @@ function homePageHandler(req, res) {
 app.get('/books',booksHandler);
 function booksHandler(req,req){
   let userEmail=req.query.userEmail;
-userModel.find(
+  userModel.find(
     {email:userEmail},function(error,ownerData){
     if(error){
         res.send(error,'did not work')
-    }
+      }
     else{
         res.send(ownerData[0].books)
     }
     
 })
+
+server.post('/addbook',addingBook);
+server.delete('/deletebook/:bookIndex',deletingBook);
+
+function addingBook(req,res){
+    let {email,name,description,status,img}=req.body
+    myModal.find({email:email},function(error,bookData){
+         if(error){
+             res.send('did not work')
+         }else{
+             bookData[0].books.push({
+                name: name,
+                description: description,
+                status: status,
+                img: img,
+             })
+             bookData[0].save();
+             res.send( bookData[0].books)
+         }
+    })
+}
+
+function deletingBook(req,res){
+    let emailReq=req.query.email;
+    let index=Number(req.params.bookIndex);
+
+    bookModle.find({email:emailReq},function(error,bookData){
+        if(error){
+            res.send('did not work')
+        }else{
+            let newBooksArr = bookData[0].books.filter((book,idx)=>{
+                if(idx !== index) {return book}
+             
+            })
+            bookData[0].books=newBooksArr
+            
+            bookData[0].save();
+            res.send(bookData[0].books)
+         }
+        
+    })
+}
 
 
 
