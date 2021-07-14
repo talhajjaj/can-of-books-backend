@@ -12,7 +12,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3001;
 app.use(express.json())
-mongoose.connect('mongodb://localhost:27017/books', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(`${process.env.MONGODB}`, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 const booksSchema=new mongoose.Schema({
@@ -103,6 +103,27 @@ function deletingBook(req,res){
     })
 }
 
+server.put('/updatebook',updateBook)
+function updateBook(req,res){
+  let {email,name,description,status,img}=req.body;
+  let index=Number(req.params.bookIndex);
+
+  myModal.findOne({email:email},function(error,bookData){
+       if(error){
+           res.send('did not work')
+       }else{
+           bookData[0].books.splice(index,1,{
+              name: name,
+              description: description,
+              status: status,
+              img: img,
+           })
+           bookData[0].save();
+           res.send( bookData[0].books)
+       }
+  })
+
+}
 
 
 }
